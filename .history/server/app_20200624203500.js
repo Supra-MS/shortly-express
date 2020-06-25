@@ -84,9 +84,11 @@ app.post('/login',
         if (userDetail) {
           var passwordMatch = models.Users.compare(req.body.password, userDetail.password, userDetail.salt);
           if (passwordMatch) {
+            // res.sendStatus(200);
             res.redirect(200, '/');
             res.end();
           } else {
+            // res.status(401).send('Incorrect password. Please try again.');
             res.redirect(401, '/login');
             res.end();
           }
