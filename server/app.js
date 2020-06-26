@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(cookieParser);
-
+app.use(Auth.createSession);
 
 app.get('/',
   (req, res) => {
@@ -77,10 +77,9 @@ app.post('/links',
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
-app.get('/login',
-  (req,res) => {
-    res.render('login')
-  })
+app.get('/login', (req, res) => {
+  res.render('login');
+});
 
 app.post('/login',
   (req, res, next) => {
@@ -109,17 +108,16 @@ app.post('/login',
   }
 );
 
-app.get('/signup',
-  (req,res) => {
-    res.render('signup')
-  })
+app.get('/signup', (req, res) => {
+  res.render('signup');
+});
 
 app.post('/signup',
   (req, res, next) => {
     models.Users.get({ username: req.body.username })
       .then((userDetail) => {
         if (!userDetail) {
-          models.Users.create({username: req.body.username, password: req.body.password}).then(() => {
+          models.Users.create({ username: req.body.username, password: req.body.password }).then(() => {
             console.log('Sign up flow creation successful!');
             res.redirect(201, '/');
             res.end();
