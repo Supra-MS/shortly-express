@@ -571,6 +571,24 @@ describe('', function() {
     });
   });
 
+  describe('Log out functionality', function(){
+    it('Should redirect to the Log In page when logging out', function(done) {
+      request('http://127.0.0.1:4568/logout', function(error, res, body) {
+          if (error) { return done(error); }
+          expect(res.req.path).to.equal('/login');
+          done();
+        });
+    });
+
+    it('Logging out should return a 200 status code', function(done) {
+      request('http://127.0.0.1:4568/logout', function(error, res, body) {
+        if (error) { return done(error); }
+        expect(res.statusCode).to.equal(200);
+        done();
+      });
+    });
+  });
+
   describe('Privileged Access:', function() {
 
     it('Redirects to login page if a user tries to access the main page and is not signed in', function(done) {
