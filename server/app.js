@@ -17,17 +17,17 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use(cookieParser);
 app.use(Auth.createSession);
 
-app.get('/',
+app.get('/', Auth.verifySession,
   (req, res) => {
     res.render('index');
   });
 
-app.get('/create',
+app.get('/create', Auth.verifySession,
   (req, res) => {
     res.render('index');
   });
 
-app.get('/links',
+app.get('/links', Auth.verifySession,
   (req, res, next) => {
     models.Links.getAll()
       .then(links => {
@@ -38,7 +38,7 @@ app.get('/links',
       });
   });
 
-app.post('/links',
+app.post('/links', Auth.verifySession,
   (req, res, next) => {
     var url = req.body.url;
     if (!models.Links.isValidUrl(url)) {
@@ -77,6 +77,16 @@ app.post('/links',
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.get('/logout', (req, res) => {
+  models.Sessions.delete({hash: req.session.hash})
+    .then((result) => {
+      res.clearCookie('shortlyId');
+      res.redirect('/login');
+    })
+});
+
+
+
 app.get('/login', (req, res) => {
   res.render('login');
 });
@@ -90,8 +100,11 @@ app.post('/login',
         if (userDetail) {
           var passwordMatch = models.Users.compare(req.body.password, userDetail.password, userDetail.salt);
           if (passwordMatch) {
-            res.redirect(200, '/');
-            res.end();
+            models.Sessions.update({hash: req.session.hash},{userId: userDetail.id})
+              .then(() => {
+                res.redirect(200, '/');
+                res.end();
+              })
           } else {
             res.redirect(401, '/login');
             res.end();
@@ -117,10 +130,15 @@ app.post('/signup',
     models.Users.get({ username: req.body.username })
       .then((userDetail) => {
         if (!userDetail) {
-          models.Users.create({ username: req.body.username, password: req.body.password }).then(() => {
-            console.log('Sign up flow creation successful!');
-            res.redirect(201, '/');
-            res.end();
+          models.Users.create({ username: req.body.username, password: req.body.password })
+          .then((result) => {
+            console.log('INSERT RESULT SIGN UP', result);
+            models.Sessions.update({hash: req.session.hash},{userId: result.insertId})
+              .then(() => {
+                console.log('Sign up flow creation successful!');
+                res.redirect(201, '/');
+                res.end();
+              })
           }).catch((err) => {
             res.status(500).send(err);
             res.end();

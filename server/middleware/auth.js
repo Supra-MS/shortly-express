@@ -24,7 +24,20 @@ module.exports.createSession = (req, res, next) => {
 // Add additional authentication middleware functions below
 /************************************************************/
 
-var createCookie = function (req,res,next) {
+module.exports.verifySession = (req, res, next) => {
+  console.log('req.session ***', req.session);
+  if (Sessions.isLoggedIn(req.session)) {
+    console.log('req.session logged in req.session', req.session);
+    next();
+  } else {
+    console.log('req.session logged out req.session', res.session);
+    res.redirect('/login');
+    res.end();
+  }
+};
+
+
+function createCookie(req,res,next) {
   Sessions.create()
     .then((result) => {
       return Sessions.get({ id: result.insertId });
@@ -38,4 +51,4 @@ var createCookie = function (req,res,next) {
       console.error(err);
       next();
     });
-};
+}
