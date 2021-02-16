@@ -7,9 +7,13 @@ const Auth = require('./middleware/auth');
 const models = require('./models');
 const cookieParser = require('./middleware/cookieParser');
 const app = express();
+const cors = require('cors');
 
+
+app.use(cors());
 app.set('views', `${__dirname}/views`);
 app.set('view engine', 'ejs');
+
 app.use(partials());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -87,9 +91,19 @@ app.get('/logout', (req, res) => {
 
 
 
-app.get('/login', (req, res) => {
+app.get('/login', (req, res, next) => {
   res.render('login');
 });
+
+/* app.post('/login', (req, res, next) => {
+  models.Users.get({ username: req.body.username })
+    .then((userDetail) => {
+      if (!userDetail) {
+        console.log('User Detail: ', userDetail);
+        res.render('login-err');
+      }
+    })
+}); */
 
 app.post('/login',
   (req, res, next) => {
@@ -102,15 +116,17 @@ app.post('/login',
           if (passwordMatch) {
             models.Sessions.update({hash: req.session.hash},{userId: userDetail.id})
               .then(() => {
-                res.redirect(200, '/');
+                return res.redirect(200, '/');
                 res.end();
               })
           } else {
-            res.redirect(401, '/login');
+            res.render('login-pwd-err');
+            res.redirect('/login');
             res.end();
           }
         } else {
           console.log('User does not exist. Please sign up!');
+          res.render('login-err');
           res.redirect(401, '/login');
           res.end();
         }
@@ -136,6 +152,7 @@ app.post('/signup',
             models.Sessions.update({hash: req.session.hash},{userId: result.insertId})
               .then(() => {
                 console.log('Sign up flow creation successful!');
+                res.render('index');
                 res.redirect(201, '/');
                 res.end();
               })
@@ -144,12 +161,14 @@ app.post('/signup',
             res.end();
           });
         } else {
-          res.redirect(200, '/signup');
+          res.render('signup-err');
+          res.redirect('/signup');
           res.end();
         }
       })
       .catch((err) => {
-        res.status(500).send(err);
+
+        res.status(500); // .send(err);
         res.end();
       });
   }
